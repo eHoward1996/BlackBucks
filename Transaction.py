@@ -1,8 +1,9 @@
-import coincurve
-import hashlib
 import json
-
 from time import time
+
+from Crypto.Hash import SHA256
+from Crypto.PublicKey import ECC
+from Crypto.Signature import DSS
 
 
 class Transaction():
@@ -11,11 +12,12 @@ class Transaction():
 		self._origin = origin
 		self._destination = destination
 		self._amount = amount
-		self._timestamp = time()
+		self._timestamp = int(time())
 		self._signature = signature
+		self._transaction_hash = None
 
 		if self._signature is not None:
-			self.tx_hash = self.calculateTXHash()
+			self._transaction_hash = self._calculateTransactionHash()
 
 	@property
 	def origin(self):
@@ -34,29 +36,61 @@ class Transaction():
 		return self._timestamp
 
 	@property
-	def tx_hash(self):
-		return self._tx_hash
+	def transaction_hash(self):
+		return self._transaction_hash
 
 	@property
 	def signature(self):
 		return self._signature
 
-	def _calculate_tx_hash(self):
+	def _calculateTransactionHash(self):
 		"""
 			Calculates sha256 hash of transaction
-			(source, destination, amount, timestamp, signature)
+			(origin, destination, amount, timestamp, signature)
 
 			:return: sha256 hash
 			:rtype: str
 		"""
 		data = {
-			"source": self.source,
+			"source": self.origin,
 			"destination": self.destination,
 			"amount": self.amount,
 			"timestamp": self.timestamp,
 			"signature": self.signature
 		}
 		data_json = json.dumps(data, sort_keys=True)
-		hash_object = hashlib.sha256(data_json)
+		hash_object = SHA256.new(str.encode(data_json))
 
 		return hash_object.hexdigest()
+
+	def sign(self, private_key):
+		signer = DSS.new(private_key, 'fips-186-3')
+		signature = signer.sign(self.stringify())
+
+		self._signature = signature
+		self._transaction_hash = self._calculateTransactionHash()
+		return signature
+
+	def stringify(self):
+		return ":".join((
+			self._origin,
+			self._destination,
+			str(self._amount),
+			str(self.signature)
+		))
+
+	def verify_sender(self):
+		key = ECC.import_key(self._source)
+		verifier = DSS.new(key, 'fips-186-3')
+		verifier.verify(self.stringify(), self._signature)
+
+	def jsonify(self):
+		data = {
+			"origin": self.origin,
+			"destination": self.destination,
+			"amount": str(self.amount),
+			"signature": self.signature,
+			"tx_hash": self.transaction_hash
+		}
+
+		return data
