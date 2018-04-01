@@ -1,15 +1,12 @@
-"""
-	Test BlockChain class
-"""
-
-import hashlib
-import json
-from time import time
 from urllib.parse import urlparse
 from uuid import uuid4
 
 import requests
+from Crypto.Hash import SHA256
 from flask import Flask, jsonify, request
+
+from Block import Block
+from Transaction import Transaction
 
 
 class BlockChain(object):
@@ -17,56 +14,117 @@ class BlockChain(object):
 		Python implementation of BlockChain
 	"""
 
-	def __init__(self):
-		self.chain = []
-		self.current_transactions = []
+	# List of nodes in the cryptocurrency network
+	nodes = set()
 
-		self.nodes = set()
+	maxTransactions = 4
+	blocks = []
+
+	def __init__(self, blocks=None):
+		# List of currently unpublished transactions
+		self.unpublished_transactions = []
 
 		# Create genisis block
-		self.new_block(previous_hash=1, proof=100)
+		if blocks is None:
+			genesis_block = self.generate_genesis_block()
+			self.add_block(genesis_block)
+		else:
+			for block in blocks():
+				self.add_block(block)
 
-	def new_block(self, proof, previous_hash=None):
+	def generate_genesis_block(self):
+		genesis_transactions = []
+		for i in range(4):
+			genesis_transactions.append(Transaction(
+				"0",
+				"0",
+				0,
+				"",
+			))
+
+		genesis_block = Block(0, genesis_transactions, "", 100)
+		return genesis_block
+
+	def add_block(self, block):
+		self.blocks.append(block)
+
+	def new_block(self, nonce, previous_hash, block_owner):
 		# Creates new block and adds it to the chain
 		"""
 			Create a new block in the block chain
 
 			:param proof: <int> The proof given by the Proof of Work algorithm
 			:param previous_hash: (Optional) <str> Hash of previous Block
-			:return: <dict> New Block
+			:param block_owner: (Optional) <str> If this is not None, a block was mined
+			:return: <Block> New Block
 		"""
-		block = {
-			'index': len(self.chain) + 1,
-			'timestamp': time(),
-			'transactions': self.current_transactions,
-			'proof': proof,
-			'previous_hash': previous_hash or self.hash(self.chain[-1]),
-		}
 
-		# Reset the current list of transactions
-		self.current_transactions = []
+		if len(self.unpublished_transactions) < 1:
+			return "There are no unpublished transactions. No new block will be created and/or added."
 
-		self.chain.append(block)
-		return block
+		added_transactions = []
+		for i in range(self.maxTransactions):
+			if i < len(self.unpublished_transactions):
+				added_transactions.append(self.unpublished_transactions.pop(0))
+			else:
+				break
 
-	def new_transaction(self, sender, recipient, amount):
+		# We must recieve a reword for finding the proof.
+		# The sender is "0" to signify that this node has mined a new coin.
+		added_transactions.append(Transaction(
+			"0",
+			block_owner,
+			self.get_reward(),
+			""
+		))
+
+		b = Block(
+			index=self.size(),
+			transactions=added_transactions,
+			previous_hash=previous_hash,  # or self.hash(self.blocks[-1]),
+			nonce=nonce
+		)
+
+		self.blocks.append(b)
+		return b
+
+	def new_transaction(self, senderAddr, recipientAddr, amountSent, signed=None):
 		# Adds a new transaction to the list of transactions
 		"""
 			Creates a new transaction to go into the next mined Block
 
-			:param sender: <str> Address of the Sender
-			:param recipient: <str> Address of the Recipient
-			:param amount: <float> Amount
+			:param senderAddr: <str> Address of the Sender
+			:param recipientAddr: <str> Address of the Recipient
+			:param amountSent: <float> Amount
+			:param signed: <str> Signature verifying transaction
 			:return: <int> index of the Block that will hold the transaction
 		"""
 
-		self.current_transactions.append({
-			'sender': sender,
-			'recipient': recipient,
-			'amount': amount,
-		})
+		self.unpublished_transactions.append(Transaction(
+			senderAddr,
+			recipientAddr,
+			amountSent,
+			signed
+		))
 
-		return self.last_block['index'] + 1
+		return self.size()
+
+	def get_balance(self, address):
+		balance = 0
+		for block in self.blocks:
+			for transaction in block.transactions:
+				if transaction.origin == address:
+					balance -= transaction.amount
+				if transaction.destination == address:
+					balance += transaction.amount
+
+		return balance
+
+	def get_reward(self):
+		return 25
+
+	def size(self):
+		return len(self.blocks)
 
 	@staticmethod
 	def hash(block):
@@ -74,16 +132,17 @@ class BlockChain(object):
 		"""
 			Creates a SHA256 hash of a block
 
-			:param block: <dict> Block
+			:param block: <Block> Block
 			:return: <str>
 		"""
-		block_string = json.dumps(block, sort_keys=True).encode()
-		return hashlib.sha256(block_string).hexdigest()
+
+		block_string = block.stringify()
+		return SHA256.new(str.encode(block_string)).hexdigest()
 
 	@property
 	def last_block(self):
 		# Returns the last block in the chain
-		return self.chain[-1]
+		return self.blocks[-1]
 
 	def proof_of_work(self, last_proof):
 		"""
@@ -95,26 +154,29 @@ class BlockChain(object):
 				:param last_proof: <int>
 				:return: <int>
 		"""
-		proof = 0
-		while self.valid_proof(last_proof, proof) is False:
-			proof += 1
+		nonce = 0
+		satisfied, guess = self.valid_proof(last_proof, nonce)
 
-		return proof
+		while satisfied is False:
+			nonce += 1
+			satisfied, guess = self.valid_proof(last_proof, nonce)
+
+		return nonce, guess
 
 	@staticmethod
-	def valid_proof(last_proof, proof):
+	def valid_proof(last_proof, nonce):
 		"""
-			Validates the Proof: Does Hash(last_proof, proof) contains 4 leading zeroes?
+			Validates the Proof: Does Hash(last_proof, nonce) contains 4 leading zeroes?
 
 			:param last_proof: <int> Previous Proof
-			:param proof: <int> Current Proof
+			:param proof: <int> Current number of guesses
 			:return: <bool> True if Correct, False is not
 		"""
 
-		guess = f'{last_proof}{proof}'.encode()
-		guess_hash = hashlib.sha256(guess).hexdigest()
+		guess = f'{last_proof}{nonce}'.encode()
+		guess_hash = SHA256.new(guess).hexdigest()
 
-		return guess_hash[:4] == "0000"
+		return guess_hash[:4] == "0000", guess_hash
 
 	def register_node(self, address):
 		"""
@@ -126,6 +188,8 @@ class BlockChain(object):
 
 		parsed_url = urlparse(address)
 		self.nodes.add(parsed_url.netloc)
+		for x in address:
+			self.resolve_conflicts()
 
 	def valid_chain(self, chain):
 		"""
@@ -137,25 +201,40 @@ class BlockChain(object):
 
 		last_block = chain[0]
 		current_index = 1
+		if_valid_blocks = []
 
 		while current_index < len(chain):
 			block = chain[current_index]
-			print(f'{last_block}')
-			print(f'{block}')
-			print("\n-----------------------\n")
 
 			# Check that the hash of the block is correct
+			trans = []
+			for t in last_block['transactions']:
+				trans.append(Transaction(
+					origin=t['origin'],
+					destination=t['destination'],
+					amount=t['amount'],
+					signature=t['signature']
+				))
+
+			last_block = Block(
+				last_block['index'],
+				trans,
+				last_block['previous_hash'],
+				last_block['nonce']
+			)
+
 			if block['previous_hash'] != self.hash(last_block):
 				return False
 
 			# Check that the Proof of Work is correct
-			if not self.valid_proof(last_block['proof'], block['proof']):
+			if not self.valid_proof(last_block.block_header.previous_hash, last_block.block_header.nonce):
 				return False
 
 			last_block = block
 			current_index += 1
+			if_valid_blocks.append(last_block)
 
-		return True
+		return True, if_valid_blocks
 
 	def resolve_conflicts(self):
 		"""
@@ -169,7 +248,7 @@ class BlockChain(object):
 		new_chain = None
 
 		# We're only looking for chains longer than ours
-		max_length = len(self.chain)
+		max_length = len(self.blocks)
 
 		# Grab and verify the chains from all the nodes in out network
 		for node in neighbors:
@@ -177,7 +256,7 @@ class BlockChain(object):
 
 			if response.status_code == 200:
 				length = response.json()['length']
-				chain = response.json()['chain']
+				chain = response.json()['blocks']
 
 				# Check if the length is longer and the chain valid
 				if length > max_length and self.valid_chain(chain):
@@ -186,10 +265,38 @@ class BlockChain(object):
 
 		# Replace our chain if we discovered a new, valid chain longer than ours
 		if new_chain:
-			self.chain = new_chain
+			blocks = []
+			for i in range(len(new_chain)):
+				trans = []
+				for t in new_chain[i]['transactions']:
+					trans.append(Transaction(
+						origin=t['origin'],
+						destination=t['destination'],
+						amount=t['amount'],
+						signature=t['signature']
+					))
+
+				blocks.append(Block(
+					i,
+					trans,
+					new_chain[i]['previous_hash'],
+					new_chain[i]['nonce']
+				))
+
+			self.blocks = blocks
 			return True
 
 		return False
+
+	def jsonify(self):
+		r = {}
+		blx = []
+		for b in self.blocks:
+			blx.append(b.jsonify())
+
+		r['blocks'] = blx
+		r['length'] = len(blx)
+		return r
 
 
 # Instantiate the Node
@@ -199,35 +306,31 @@ app = Flask(__name__)
 node_identifier = str(uuid4()).replace('-', '')
 
 # Instantiate the Blockchain
-BCHAIN = BlockChain()
+bc = BlockChain()
 
 
 @app.route('/mine', methods=['GET'])
 def mine():
-	# We run the proof of work algorithm to get the next proof
-	last_block = BCHAIN.last_block
-	last_proof = last_block['proof']
-	proof = BCHAIN.proof_of_work(last_proof)
-
-	# We must recieve a reword for finding the proof.
-	# The sender is "0" to signify that this node has mined a new coin.
-	BCHAIN.new_transaction(
-		sender="0",
-		recipient=node_identifier,
-		amount=1,
-	)
+	last_block = bc.last_block
+	nonce, hashProvided = bc.proof_of_work(last_block.block_header.nonce)
 
 	# Forge the new block by adding it to the chain
-	previous_hash = BCHAIN.hash(last_block)
-	block = BCHAIN.new_block(proof, previous_hash)
+	previous_hash = bc.hash(last_block)
+	block = bc.new_block(nonce, previous_hash, node_identifier)
+
+	if type(block) == str:
+		return jsonify({"message": block}), 200
 
 	response = {
 		'message': "New Block forged",
-		'index': block['index'],
-		'transactions': block['transactions'],
-		'proof': block['proof'],
-		'previous_hash': block['previous_hash'],
+		'index': block.index,
+		'transactions': block.transactions_toListOfDict(),
+		'previous_hash': block.block_header.previous_hash,
+		'timestamp': block.timestamp,
+		'merkle_root': block.block_header.merkle_root,
+		'nonce': block.block_header.nonce
 	}
+
 	return jsonify(response), 200
 
 
@@ -241,8 +344,11 @@ def new_transaction():
 		return 'Missing Values', 400
 
 	# Create a new Transaction
-	index = BCHAIN.new_transaction(
-		values['sender'], values['recipient'], values['amount'])
+	index = bc.new_transaction(
+		values['sender'],
+		values['recipient'],
+		values['amount']
+	)
 
 	response = {
 		'message': f'Transaction will be added to block {index}'
@@ -252,10 +358,7 @@ def new_transaction():
 
 @app.route('/chain', methods=['GET'])
 def full_chain():
-	response = {
-		'chain': BCHAIN.chain,
-		'length': len(BCHAIN.chain),
-	}
+	response = bc.jsonify()
 	return jsonify(response), 200
 
 
@@ -268,28 +371,29 @@ def register_nodes():
 		return "Error: Please supply a valid list of nodes\n", 400
 
 	for node in nodes:
-		BCHAIN.register_node(node)
+		bc.register_node(node)
 
 	response = {
 		'message': 'New nodes have been added',
-		'total_nodes': list(BCHAIN.nodes),
+		'total_nodes': list(bc.nodes),
 	}
+
 	return jsonify(response), 201
 
 
 @app.route('/nodes/resolve', methods=['GET'])
 def consensus():
-	replaced = BCHAIN.resolve_conflicts()
+	replaced = bc.resolve_conflicts()
 
 	if replaced:
 		response = {
 			'message': 'Our chain was replaced',
-			'new_chain': 'blockchain.chain'
+			'new_chain': bc.jsonify()['blocks']
 		}
 	else:
 		response = {
 			'message': 'Our chain is authoritative',
-			'chain': BCHAIN.chain
+			'chain': bc.jsonify()['blocks']
 		}
 
 	return jsonify(response), 200
@@ -310,7 +414,7 @@ if __name__ == '__main__':
 	port = args.port
 
 	app.run(
-		host='0.0.0.0',
+		host='127.0.0.1',
 		port=port
 	)
 
