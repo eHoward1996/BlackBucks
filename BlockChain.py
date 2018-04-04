@@ -338,7 +338,7 @@ def mine():
         'nonce': block.block_header.nonce
     }
 
-    return jsonify(response), 200
+    return render_template('transactions.html', summary=jsonify(response, 200))
 
 
 @app.route('/transactions/new', methods=['POST'])
