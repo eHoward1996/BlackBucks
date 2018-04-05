@@ -362,7 +362,7 @@ def new_transaction():
     response = {
         'message': f'Transaction will be added to block {index}'
     }
-    return render_template('new.html', summary=jsonify(response, 201))
+    return render_template('transactions.html', summary=jsonify(response, 201))
 
 
 @app.route('/chain', methods=['GET'])
