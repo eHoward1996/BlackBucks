@@ -1,9 +1,6 @@
 from urllib.parse import urlparse
-from uuid import uuid4
-
 import requests
 from Crypto.Hash import SHA256
-from flask import Flask,render_template, jsonify, request
 
 from Block import Block
 from Transaction import Transaction
@@ -297,6 +294,7 @@ class BlockChain(object):
         r['blocks'] = blx
         r['length'] = len(blx)
         return r
+<<<<<<< Updated upstream
 
 
 # Instantiate the Node
@@ -426,3 +424,5 @@ if __name__ == '__main__':
         host='127.0.0.1',
         port=port
     )
+=======
+>>>>>>> Stashed changes
