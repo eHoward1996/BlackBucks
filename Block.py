@@ -1,8 +1,8 @@
+from collections import OrderedDict
 from time import time
 
-from collections import OrderedDict
-
 from Crypto.Hash import SHA256
+
 from Transaction import Transaction
 
 

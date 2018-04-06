@@ -1,4 +1,5 @@
 from urllib.parse import urlparse
+
 import requests
 from Crypto.Hash import SHA256
 

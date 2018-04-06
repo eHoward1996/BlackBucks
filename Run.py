@@ -1,14 +1,12 @@
 from uuid import uuid4
-from flask import Flask, render_template, jsonify, request
+
+from flask import Flask, jsonify, render_template, request
+
 from BlockChain import BlockChain
 
-# Instantiate the Node
 app = Flask(__name__)
-
 # Generate a globally unique address for the node
 node_identifier = str(uuid4()).replace('-', '')
-
-# Instantiate the Blockchain
 bc = BlockChain()
 
 
