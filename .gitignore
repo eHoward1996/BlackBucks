@@ -1,3 +1,4 @@
 Testing.py
 __pycache__/
 .idea/
+*.pem
