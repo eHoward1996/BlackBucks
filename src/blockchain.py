@@ -3,8 +3,8 @@ from urllib.parse import urlparse
 import requests
 from Crypto.Hash import SHA256
 
-from Block import Block
-from Transaction import Transaction
+from src.block import Block
+from src.transaction import Transaction
 
 
 class BlockChain(object):

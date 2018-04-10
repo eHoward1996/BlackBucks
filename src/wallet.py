@@ -2,10 +2,9 @@ import random
 
 import requests
 from Crypto.Hash import SHA256
-from Crypto.PublicKey import ECC
 from Crypto.Signature import DSS
 
-from Transaction import Transaction
+from src.transaction import Transaction
 
 
 class Wallet():
@@ -13,8 +12,8 @@ class Wallet():
     __public_key__ = None
 
     def __init__(self, public_key, private_key):
-        self.__private_key__ = ECC.import_key(private_key)
-        self.__public_key__ = ECC.import_key(public_key)
+        self.__public_key__ = public_key
+        self.__private_key__ = private_key
 
     def get_public_key(self):
         return self.__public_key__.export_key(format='PEM')

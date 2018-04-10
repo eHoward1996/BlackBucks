@@ -3,7 +3,7 @@ from time import time
 
 from Crypto.Hash import SHA256
 
-from Transaction import Transaction
+from src.transaction import Transaction
 
 
 class Block():

@@ -3,8 +3,9 @@ from uuid import uuid4
 from Crypto.PublicKey import ECC
 from flask import Flask, jsonify, redirect, render_template, request
 
-from BlockChain import BlockChain
-from Wallet import Wallet
+from src.blockchain import BlockChain
+from src.wallet import Wallet
+
 
 app = Flask(__name__)
 
@@ -18,6 +19,8 @@ wallet = None
 def index():
     if request.method == 'POST':
         values = request.form
+        publicKey = None
+        privateKey = None
 
         # Check that the required fields are in the POST data
         required = ['public', 'private']
