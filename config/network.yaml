@@ -1,0 +1,14 @@
+name: "BlackBucks"
+ticker_symbol: "BB$"
+initial_coins_per_block: 50
+node_port: 5000
+nodes_url: "http://{}:{}/nodes/list"
+register_url: "http://{}:{}/nodes/register"
+copy_nodes_url: "http://{}:{}/nodes/copy"
+transactions_url: "http://{}:{}/transactions"
+block_url: "http://{}:{}/block/{}"
+blocks_range_url: "http://{}:{}/blocks/{}/{}"
+blocks_url: "http://{}:{}/blocks"
+transaction_history_url: "http://{}:{}/address/{}/transactions"
+balance_url: "http://{}:{}/address/{}/balance"
+status_url: "http://{}:{}/status"

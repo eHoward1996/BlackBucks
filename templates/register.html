@@ -1,0 +1,21 @@
+<html>
+<head>
+    <title></title>
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/register_script.js') }}"></script>
+</head>
+<body>
+    <div>
+        IP Address of the new Node:<br>
+        <input type='text' value="" id="ip_addr" />&nbsp;
+        <input type="button" value="ADD" onclick="addIP()"/>
+        <br><br>
+        List of Nodes to be added:<br>
+        <form action="/nodes/register" method="POST">
+            <div id="added" name="nodes">
+            
+            </div>
+            <input id="sub" type="submit" style="visibility: hidden;" />
+        </form>
+    </div>
+</body>
+</html>
