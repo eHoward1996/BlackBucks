@@ -1,8 +1,5 @@
+import datetime
 import os
-import select
-import socket
-import threading
-from time import time
 
 import requests
 import yaml
@@ -15,10 +12,8 @@ from src.wallet import Wallet
 
 class Node(object):
 
+    blockchain = None
     wallet = None
-    client = None
-    server = None
-
     other_nodes = set()
     network_yaml = 'config/network.yaml'
     network_config = None
@@ -45,15 +40,14 @@ class Node(object):
             )
 
         self.address = ip_address
-        self.public_key = private.public_key()
-        self.public_address = SHA256.new(str.encode(self.public_key.export_key(format='PEM'))).hexdigest()
+        self.public_key = public
         self.private_key = private
 
         self.network_config = yaml.load(open(self.network_yaml, 'rt'))
 
         self.broadcast_nodes([ip_address])
         self.other_nodes.add(ip_address)
-        self.bc = BlockChain()
+        self.blockchain = BlockChain()
 
         # self.mining_process = Process(target=self.mine)
         # self.mining_process.start()
@@ -64,10 +58,11 @@ class Node(object):
         # )
         # self.node_process.start()
 
-        self.wallet = Wallet(public, private)
-
-    def get_public_address(self):
-        return self.public_address
+        self.wallet = Wallet(
+            self.public_key,
+            self.private_key,
+            self.network_config
+        )
 
     def get_ip_address(self):
         return self.address
@@ -155,6 +150,20 @@ class Node(object):
             if addr not in self.other_nodes:
                 self.other_nodes.add(addr)
 
+    def recieve_new_transaction(self, transaction):
+        self.blockchain.new_transaction(transaction)
+
+    def get_balance(self):
+        return self.blockchain.get_balance(self.wallet.get_public_address())
+
+    def get_transaction_history(self):
+        tx = self.blockchain.get_transaction_history(self.wallet.get_public_address())
+        for t in tx:
+            stamp = t['time']
+            t['time'] = datetime.datetime.fromtimestamp(stamp).strftime('%b %d %Y %H %M %S')
+
+        return tx
+
     def broadcast_block(self, block):
         # TODO convert to grequests and concurrently gather a list of responses
         statuses = {
@@ -190,15 +199,24 @@ class Node(object):
         bad_nodes.clear()
         return statuses
 
-    def broadcast_transaction(self, transaction):
-        self.request_nodes_from_all()
+    def broadcast_transaction(self, recipient, amount):
+        if int(amount) > self.get_balance():
+            return "Not enough BlackBucks for transaction!"
+
+        self.request_all_nodes()
         bad_nodes = set()
+
+        tx = self.wallet.create_transaction(recipient, amount)
+        self.blockchain.new_transaction(tx)
+
         data = {
-            "transaction": transaction.to_json()
+            "transaction": tx.jsonify()
         }
 
-        for node in self.full_nodes:
-            url = self.TRANSACTIONS_URL.format(node, self.FULL_NODE_PORT)
+        print(data)
+
+        for node in self.other_nodes:
+            url = self.network_config['add_tx_url'].format(node, self.network_config['node_port'])
             try:
                 response = requests.post(url, json=data)
             except requests.exceptions.RequestException as re:

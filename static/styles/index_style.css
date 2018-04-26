@@ -1,69 +1,465 @@
-body {
-    margin: 0;
-    padding: 0;
-    background-color: #3CB371;
-    background-size: cover;
-    background-position: center;
-    font-family: sans-serif;
-    color: #fff;
-}
+	html, body
+	{
+		height: 100%;
+	}
+	
+	body
+	{
+		margin: 0px;
+		padding: 0px;
+		background: #202020;
+		font-family: 'Source Sans Pro', sans-serif;
+		font-size: 12pt;
+		font-weight: 300;
+		color: #444444;
+	}
+	
+	h1, h2, h3
+	{
+		margin: 0;
+		padding: 0;
+		font-weight: 600;
+		color: #333333;
+	}
+	
+	p, ol, ul
+	{
+		margin-top: 0;
+	}
+	
+	ol, ul
+	{
+		padding: 0;
+		list-style: none;
+	}
+	
+	p
+	{
+		line-height: 180%;
+	}
+	
+	a
+	{
+		color: #2980b9;
+	}
+	
+	a:hover
+	{
+		text-decoration: none;
+	}
+	
+	.container
+	{
+		overflow: hidden;
+		margin: 0em auto;
+		width: 1200px;
+	}
+	
+/*********************************************************************************/
+/* List Styles                                                                   */
+/*********************************************************************************/
 
-.headers    {
-    margin: auto;
-    text-align: center;
-}
+	ul.style1
+	{
+		margin: 0 auto;
+		padding: 0;
+		width: 90%;
+		list-style: none;
+		text-align: left;
+		color: #6c6c6c
+	}
+	
+	ul.style1 li
+	{
+		padding: 0em 0em .5em 0em;
+		margin: 0 0 2.5em 0;
+		border-top: 1px solid rgba(0,0,0,.1); 
+		height: auto;
+	}
+	
+	ul.style1 li:first-child
+	{
+		border-top: none;
+	}
+	
+	ul.style1 h3
+	{
+		padding: 1em 0em 5px 0em;
+		text-transform: uppercase;
+		font-size: 1em;
+		font-weight: 400;
+	}
+	
+	ul.style1 .first
+	{
+		padding-top: 0;
+		background: none;
+	}
+	
+	ul.style1 .date
+	{
+		float: left;
+		position: relative;
+		width: 80px;
+		height: 5em;
+		margin: 1.5em 1.5em 0em 0.5em;
+		padding: 1.5em 1.5em;
+		box-shadow: 0px 0px 0px 5px rgba(255,255,255,0.1);
+		line-height: normal;
+		text-align: center;
+		text-transform: uppercase;
+		text-shadow: 0px 1px 0px rgba(0,0,0,.2);
+		font-size: 1em;
+		font-weight: 400;
+		border-right: 1px solid rgba(0,0,0,.1); 
+	}
+	
+	ul.style1 .block
+	{
+		float: left;
+		position: relative;
+		width: 80px;
+		margin: 1.5em 1.5em 0em 0.5em;
+		padding: 1.5em 0em;
+		box-shadow: 0px 0px 0px 5px rgba(255,255,255,0.1);
+		line-height: normal;
+		text-align: center;
+		text-transform: uppercase;
+		text-shadow: 0px 1px 0px rgba(0,0,0,.2);
+		font-size: 1em;
+		font-weight: 400;
+		align-content: center;
+	}
 
-.login-box {
-    width: 320px;
-    height: 420px;
-    background: rgba(0, 0, 0, 0.5);
-    top: 50%;
-    left: 50%;
-    position: absolute;
-    transform: translate(-50%, -50%);
-    box-sizing: border-box;
-    padding: 20px 30px;
-}
+	ul.style1 .block-container
+	{
+		border-right: 1px solid rgba(0,0,0,.1);
+		width: 10%;
+		padding: 0em 0.5em;
+	}
 
-.login-box p {
-    margin: 0;
-    padding: 0;
-    font-weight: bold;
-}
+	ul.style1 .tx-container
+	{
+		padding: 1.5em .25em;
+	}
 
-.login-box input {
-    width: 100%;
-    margin-bottom: 20px;
-}
+	ul.style1 .date:after
+	{
+		content: '';
+		display: block;
+		position: absolute;
+		left: 0;
+		top: 0;
+		width: 100%;
+		height: 100%;
+		border-radius: 6px;
+	}
+	
+	ul.style1 .date b
+	{
+		margin: 0;
+		padding: 0;
+		display: block;
+		margin-top: -5px;
+		font-size: 1.8em;
+		font-weight: 700;
+	}
+	
+	ul.style1 .block b
+	{
+		margin: 0;
+		padding: 0;
+		display: block;
+		margin-top: -5px;
+		font-size: 1.8em;
+		font-weight: 700;
+	}
 
-.login-box input[type="text"], input[type="password"] {
-    border: none;
-    border-bottom: 1px solid #fff;
-    background: transparent;
-    outline: none;
-    height: 40px;
-    font-size: 16px;
-}
+    ul.style1 .tinfo
+    {
+        line-height: 150%;
+    }
 
-.login-box input[type="submit"] {
-    border: none;
-    outline: none;
-    height: 40px;
-    background: #1c8adb;
-    font-size: 18px;
-    border-radius: 20px;
-}
+/*********************************************************************************/
+/* Button Style                                                                  */
+/*********************************************************************************/
 
-.login-box input[type="submit"]:hover {
-    cursor: pointer;
-    background: #39dc79;
-}
+	.button
+	{
+		display: inline-block;
+		padding: 1em 3em 1em 2em;
+		letter-spacing: 0.20em;
+		text-decoration: none;
+		text-transform: uppercase;
+		font-weight: 400;
+		font-size: 0.90em;
+		color: #FFF;
+	}
+	
+	.button:before
+	{
+		display: inline-block;
+		background: #FFC31F;
+		margin-right: 1em;
+		width: 40px;
+		height: 40px;
+		line-height: 40px;
+		border-radius: 20px;
+		text-align: center;
+		color: #272925;
+	}
+		
+/*********************************************************************************/
+/* 4-column                                                                      */
+/*********************************************************************************/
 
-.login-box a {
-    text-decoration: none;
-    font-size: 14px;
-}
+	.box1,
+	.box2,
+	.box3,
+	.box4
+	{
+		width: 235px;
+	}
+	
+	.box1,
+	.box2,
+	.box3,
+	{
+		float: left;
+		margin-right: 20px;
+	}
+	
+	.box4
+	{
+		float: right;
+	}
+	
+/*********************************************************************************/
+/* 3-column                                                                      */
+/*********************************************************************************/
 
-.login-box a:hover {
-    color: #39dc79;
-}
+	.boxA,
+	.boxB,
+	.boxC
+	{
+		width: 320px;
+	}
+
+	.boxA,
+	.boxB,
+	{
+		float: left;
+		margin-right: 20px;
+	}
+	
+	.boxC
+	{
+		float: right;
+	}
+
+/*********************************************************************************/
+/* 2-column                                                                      */
+/*********************************************************************************/
+
+	.tbox1,
+	.tbox2
+	{
+		width: 575px;
+	}
+	
+	.tbox1
+	{
+		float: left;
+	}
+
+	.tbox2
+	{
+		float: right;
+	}
+
+/*********************************************************************************/
+/* Heading Titles                                                                */
+/*********************************************************************************/
+
+	.title
+	{
+		margin-bottom: 3em;
+	}
+	
+	.title h2
+	{
+		font-size: 2.8em;
+	}
+	
+	.title .byline
+	{
+		font-size: 1.3em;
+		color: #6F6F6F;
+	}
+		
+/*********************************************************************************/
+/* Header                                                                        */
+/*********************************************************************************/
+
+	#header
+	{
+		position: relative;
+		float: left;
+		width: 300px;
+		padding: 3em 0em;
+		color: rgba(255, 255, 255)
+	}
+	#header h3
+	{
+		color: rgba(255, 255, 255)
+	}
+
+/*********************************************************************************/
+/* Logo                                                                          */
+/*********************************************************************************/
+
+	#logo
+	{
+		text-align: center;
+		margin-bottom: 4em;
+	}
+	
+	#logo h1
+	{
+		display: block;
+	}
+	
+	#logo a
+	{
+		text-decoration: none;
+		color: #FFF;
+	}
+	
+	#logo span
+	{
+		padding-right: 0.5em;
+		text-transform: uppercase;
+		font-size: 0.90em;
+		color: rgba(255,255,255,0.3);
+	}
+
+	#logo span a
+	{
+		color: rgba(255,255,255,0.5);
+	}
+	
+	#logo img
+	{
+		display: inline-block;
+		margin-bottom: 1em;
+		border-radius: 50%;
+	}
+
+/*********************************************************************************/
+/* Menu                                                                          */
+/*********************************************************************************/
+
+	#menu li
+	{
+		border-top: 1px solid rgba(255,255,255,0.08);
+	}
+	
+	#menu li a, #menu li span
+	{
+		display: block;
+		padding: 2em 1.5em;
+		text-align: center;
+		text-decoration:  none;
+		text-transform: uppercase;
+		font-weight: 700;
+		color: rgba(255,255,255,0.5);
+	}
+
+	#menu li a:hover
+	{
+		background: #2980b9;
+		color: rgba(255,255,255,1);
+	}
+/*********************************************************************************/
+/* Banner                                                                        */
+/*********************************************************************************/
+
+	#banner
+	{
+		margin-bottom: 4em;
+	}
+
+/*********************************************************************************/
+/* Page                                                                          */
+/*********************************************************************************/
+
+	#page
+	{
+		background: #2a2a2a;
+	}
+
+/*********************************************************************************/
+/* Main                                                                          */
+/*********************************************************************************/
+
+	#main
+	{
+		overflow: hidden;
+		float: right;
+		width: 800px;
+		padding: 3em 50px 5em 50px;
+		background: #FFF;
+		border-top: 6px solid #2980b9;
+		text-align: center;
+	}
+
+/*********************************************************************************/
+/* Featured                                                                      */
+/*********************************************************************************/
+
+	#featured
+	{
+		overflow: hidden;
+		margin-bottom: 3em;
+		padding-top: 5em;
+		border-top: 1px solid rgba(0,0,0,0.08);
+	}
+
+/*********************************************************************************/
+/* Sidebar                                                                       */
+/*********************************************************************************/
+
+
+/*********************************************************************************/
+/* Public Address Span                                                                       */
+/*********************************************************************************/
+    #address
+    {
+        font-size: 24px;
+    }
+
+/*********************************************************************************/
+/* TextBox
+/*********************************************************************************/
+
+	#transaction_tbl
+	{
+		text-align: center;
+		width: 100%;
+		font-size: 16pt;
+	}
+
+	#transaction_tbl .subButton
+	{
+		width: 30%;
+		height: 5%;
+		font-size: 14pt;
+		float: left;
+		margin: 2.5% 10%;
+	}
+
+	.txtBox
+	{
+		width: 100%;
+		font-size: 16pt;
+	}

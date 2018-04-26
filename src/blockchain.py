@@ -1,5 +1,3 @@
-from urllib.parse import urlparse
-
 import requests
 from Crypto.Hash import SHA256
 
@@ -32,15 +30,30 @@ class BlockChain(object):
 
     def generate_genesis_block(self):
         genesis_transactions = []
-        for i in range(4):
+        t1 = Transaction(
+            "0",
+            "cf9cb6afa95f94dfd09142f3d14b06c9489240f2832f45d8794545d0085980f0",
+            25,
+            "",
+        )
+        t2 = Transaction(
+            "0",
+            "cf9cb6afa95f94dfd09142f3d14b06c9489240f2832f45d8794545d0085980f0",
+            25,
+            "",
+        )
+        genesis_transactions.append(t1)
+        genesis_transactions.append(t2)
+
+        for i in range(2):
             genesis_transactions.append(Transaction(
                 "0",
-                "0",
+                "-",
                 0,
                 "",
             ))
 
-        genesis_block = Block(0, genesis_transactions, "", 100)
+        genesis_block = Block(0, genesis_transactions, "", 1)
         return genesis_block
 
     def add_block(self, block):
@@ -86,7 +99,7 @@ class BlockChain(object):
         self.blocks.append(b)
         return b
 
-    def new_transaction(self, senderAddr, recipientAddr, amountSent, signed=None):
+    def new_transaction(self, transaction):
         # Adds a new transaction to the list of transactions
         """
             Creates a new transaction to go into the next mined Block
@@ -98,14 +111,8 @@ class BlockChain(object):
             :return: <int> index of the Block that will hold the transaction
         """
 
-        self.unpublished_transactions.append(Transaction(
-            senderAddr,
-            recipientAddr,
-            amountSent,
-            signed
-        ))
-
-        return self.size()
+        self.unpublished_transactions.append(transaction)
+        return True
 
     def get_balance(self, address):
         balance = 0
@@ -117,6 +124,18 @@ class BlockChain(object):
                     balance += transaction.amount
 
         return balance
+
+    def get_transaction_history(self, address):
+        tx = []
+        for block in self.blocks:
+            for transaction in block.transactions:
+                if transaction.origin == address or transaction.destination == address:
+                    t = transaction.jsonify()
+                    t['time'] = transaction.timestamp
+                    t['block_number'] = block.index
+                    tx.append(t)
+
+        return tx
 
     def get_reward(self):
         return 25
@@ -175,19 +194,6 @@ class BlockChain(object):
         guess_hash = SHA256.new(guess).hexdigest()
 
         return guess_hash[:4] == "0000", guess_hash
-
-    def register_node(self, address):
-        """
-            Add a new node to the list of nodes
-
-            :param address: <str> Address of node. Eg. 'http://192.168.0.5:5000'
-            :return: None
-        """
-
-        parsed_url = urlparse(address)
-        self.nodes.add(parsed_url.netloc)
-        for x in address:
-            self.resolve_conflicts()
 
     def valid_chain(self, chain):
         """

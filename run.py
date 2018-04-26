@@ -1,9 +1,7 @@
-# import requests
 import yaml
 from Crypto.PublicKey import ECC
 from flask import Flask, jsonify, render_template, request
 
-# import config
 from src.node import Node
 
 user_config = None
@@ -17,36 +15,47 @@ app = Flask(__name__)
 
 @app.route('/', methods=['GET'])
 def index():
-    return render_template('index.html')
-
-
-@app.route('/main')
-def mainPage():
-    transactions = None
-
-    if transactions is None:
-        transactions = 'No transaction history'
-    return render_template('main.html', transaction_history=transactions)
-
-
-@app.route('/creation')
-def createNewKeys():
-    private = ECC.generate(curve='secp256r1')
-
-    f = open('YourPrivateKey.pem', 'wt')
-    f.write(private.export_key(format='PEM'))
-    f.close()
-
-    f = open('YourPublicKey.pem', 'wt')
-    f.write(private.public_key().export_key(format='PEM'))
-    f.close()
-
-    return render_template('creation.html', )
+    return render_template(
+        'index.html',
+        public_address=node.wallet.get_public_address(),
+        balance=node.get_balance(),
+        transactions=node.get_transaction_history()
+    )
 
 
 @app.route('/transactions', methods=['GET', 'POST'])
-def start_transaction():
-    return render_template('transactions.html')
+def create_transaction():
+    if request.method == 'GET':
+        return render_template(
+            'transactions.html',
+            public_address=node.wallet.get_public_address(),
+            balance=node.get_balance()
+        )
+    elif request.method == 'POST':
+        values = request.form
+
+        # Check that the required fields are in the POST'ed data
+        required = ['recipient', 'amount']
+        if not all(k in values for k in required):
+            return render_template(
+                'transactions.html',
+                public_address=node.wallet.get_public_address(),
+                balance=node.get_balance(),
+                response="Missing Values"
+            )
+
+        # Create a new Transaction
+        response = node.broadcast_transaction(
+            values['recipient'],
+            values['amount']
+        )
+
+        return render_template(
+            'transactions.html',
+            public_address=node.wallet.get_public_address(),
+            balance=node.get_balance(),
+            response=response
+        )
 
 
 # @app.route('/mine', methods=['GET'])
@@ -74,38 +83,23 @@ def start_transaction():
 #     return render_template('transactions.html', summary=jsonify(response, 200))
 
 
-# @app.route('/transactions/new', methods=['POST'])
-# def new_transaction():
-#     if request.method == 'POST':
-#         values = request.form
-#     # Check that the required fields are in the POST'ed data
-#     required = ['sender', 'recipient', 'amount']
-#     if not all(k in values for k in required):
-#         return 'Missing Values', 400
-
-#     # Create a new Transaction
-#     index = bc.new_transaction(
-#         values['sender'],
-#         values['recipient'],
-#         values['amount']
-#     )
-
-#     response = {
-#         'message': f'Transaction will be added to block {index}'
-#     }
-#     return render_template('new.html', summary=jsonify(response, 201))
-
-
-@app.route('/chain', methods=['GET'])
-def full_chain():
-    response = node.bc.jsonify()
-    return jsonify(response), 200
+@app.route('/blockchain', methods=['GET'])
+def chain():
+    response = node.blockchain.jsonify()
+    return render_template('blockchain.html', chain=response)
 
 
 @app.route('/nodes/copy', methods=['POST'])
 def copy_nodes():
     broadcast = request.form.getlist('node_addresses')
     node.recieve_new_nodes(broadcast)
+    return jsonify(list(node.other_nodes)), 200
+
+
+@app.route('/transactions/copy', methods=['POST'])
+def copy_transactions():
+    broadcast = request.form['transaction']
+    node.recieve_new_transaction(broadcast)
     return jsonify(list(node.other_nodes)), 200
 
 

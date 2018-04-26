@@ -1,0 +1,106 @@
+<html>
+
+<head>
+    <title> BlackBucks Reference Client</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/index_style.css') }}">
+</head>
+
+<body>
+    <div id="page" class="container">
+        <div id="header">
+            <div id="logo">
+                <img src="{{ url_for('static', filename='img/letter-b-logo.jpg') }}" alt="" width="200px" height="100px" />
+                <h1>
+                    <a href="#">BlackBucks</a>
+                </h1>
+                <h3>BlackCard</h3>
+                <br> The Official Web Based Wallet for BlackBucks
+            </div>
+            <div id="menu">
+                <ul>
+                    <li>
+                        <a href="{{ url_for('index') }}" accesskey="2" title="">Home</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('create_transaction') }}" accesskey="1" title="">Send</a>
+                    </li>                    
+                    <li>
+                        <a href="#" accesskey="3" title="">Peers</a>
+                    </li>
+                    <li>
+                        <a href="#" accesskey="4" title="">Careers</a>
+                    </li>
+                    <li>
+                        <a href="#" accesskey="5" title="">Contact Us</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div id="main">
+            <div id="welcome">
+                <div class="title">
+                    <span id="address">
+                        <strong>BlackBucks BlockChain</strong>
+                    </span>
+                </div>
+            </div>
+            <div id="featured">
+                <div class="title">
+                    <h2>BlockChain: {{ chain['length'] }} Blocks</h2>
+                    <hr width="25%" />
+                </div>
+                <ul class="style1">
+                    <div>
+                        {% for block in chain['blocks'] %}
+                        <li class="first">
+                            <table>
+                                <tr>
+                                    <td class="block-container">
+                                        <p class="block">
+                                            <b>
+                                                Block {{ block['index'] }}
+                                            </b>
+                                        </p>
+                                    </td>
+                                    <td class="tx-container">
+                                        <h3 style="text-align: center;">
+                                            <strong>Transactions Posted:</strong> {{ block['transactions'] | length }}
+                                        </h3>
+                                        <div class="col">
+                                            {% for t in block['transactions'] %}
+                                            <p>
+                                                <br>
+                                                <span class="tinfo">
+                                                    <strong>Origin: </strong> {{ t['origin'] }}
+                                                </span>
+                                                <br>
+                                                <span class="tinfo">
+                                                    <strong>Destination: </strong> {{ t['destination'] }}
+                                                </span>
+                                                <br>
+                                                <span class="tinfo">
+                                                    <strong>Amount: </strong> {{ t['amount'] }} BlackBucks
+                                                </span>
+                                                <br>
+                                                <span class="tinfo">
+                                                    <strong>Hash: </strong> {{ t['tx_hash'] }}
+                                                </span>
+                                                <br>
+                                            </p>
+                                            <hr width="50%" />
+                                            {% endfor %}
+                                        </div>                                        
+                                    </td>
+                                </tr>
+                            </table>
+                        </li>
+                        <hr/>
+                        {% endfor %}
+                    </div>
+                </ul>
+            </div>
+        </div>
+    </div>
+</body>
+
+</html>
