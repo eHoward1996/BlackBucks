@@ -1,6 +1,3 @@
-import random
-
-import requests
 from Crypto.Hash import SHA256
 from Crypto.Signature import DSS
 
@@ -23,10 +20,10 @@ class Wallet():
         return self.__public_address__
 
     def get_public_key(self):
-        return self.__public_key__.export_key(format='PEM')
+        return self.__public_key__
 
     def get_private_key(self):
-        return self.__private_key__.export_key(format='PEM')
+        return self.__private_key__
 
     def sign(self, message):
         hashMessage = SHA256.new(str.encode(message))
@@ -43,19 +40,10 @@ class Wallet():
         return verifier.verify(message, signature)
 
     def create_transaction(self, to, amount):
-        m = [
-            self.__public_address__,
-            to,
-            amount
-        ]
-        m = ":".join(m)
-        signature = self.sign(m)
-
         tx = Transaction(
             self.get_public_address(),
             to,
-            amount,
-            signature
+            amount
         )
         tx.sign(self.get_private_key())
         return tx

@@ -58,31 +58,6 @@ def create_transaction():
         )
 
 
-# @app.route('/mine', methods=['GET'])
-# def mine():
-#     last_block = bc.last_block
-#     nonce, hashProvided = bc.proof_of_work(last_block.block_header.nonce)
-
-#     # Forge the new block by adding it to the chain
-#     previous_hash = bc.hash(last_block)
-#     block = bc.new_block(nonce, previous_hash, node_identifier)
-
-#     if type(block) == str:
-#         return jsonify({"message": block}), 200
-
-#     response = {
-#         'message': "New Block forged",
-#         'index': block.index,
-#         'transactions': block.transactions_toListOfDict(),
-#         'previous_hash': block.block_header.previous_hash,
-#         'timestamp': block.timestamp,
-#         'merkle_root': block.block_header.merkle_root,
-#         'nonce': block.block_header.nonce
-#     }
-
-#     return render_template('transactions.html', summary=jsonify(response, 200))
-
-
 @app.route('/blockchain', methods=['GET'])
 def chain():
     response = node.blockchain.jsonify()
@@ -98,8 +73,7 @@ def copy_nodes():
 
 @app.route('/transactions/copy', methods=['POST'])
 def copy_transactions():
-    broadcast = request.form['transaction']
-    node.recieve_new_transaction(broadcast)
+    node.recieve_new_transaction(request.form['transactions'])
     return jsonify(list(node.other_nodes)), 200
 
 
@@ -114,7 +88,8 @@ def register_nodes():
         bad_nodes = node.register_nodes(nodes)
         response = {
             'message': 'SUCCESS. All nodes added.',
-            'other_nodes': list(node.other_nodes),
+            'nodes_added': list(node.other_nodes),
+            'bad_nodes': []
         }
         if len(bad_nodes) > 0:
             message = "Bad nodes encountered. Not connecting to network."
@@ -124,9 +99,21 @@ def register_nodes():
                 'nodes_added': list(set(nodes) - set(bad_nodes))
             }
 
-        return jsonify(response), 201
+        good = "Good Nodes: ", response['nodes_added']
+        bad = "Bad Nodes: ", response['bad_nodes']
+
+        return render_template(
+            'peers.html',
+            message=response['message'],
+            good_nodes=good,
+            bad_nodes=bad,
+            peers=node.get_nodes()
+        )
     elif request.method == 'GET':
-        return render_template('register.html')
+        return render_template(
+            'peers.html',
+            peers=node.get_nodes()
+        )
 
 
 @app.route('/nodes/list', methods=['GET'])
@@ -137,22 +124,10 @@ def get_nodes():
     return jsonify(nodes), 200
 
 
-# @app.route('/nodes/resolve', methods=['GET'])
-# def consensus():
-#     replaced = bc.resolve_conflicts()
-
-#     if replaced:
-#         response = {
-#             'message': 'Our chain was replaced',
-#             'new_chain': bc.jsonify()['blocks']
-#         }
-#     else:
-#         response = {
-#             'message': 'Our chain is authoritative',
-#             'chain': bc.jsonify()['blocks']
-#         }
-
-#     return jsonify(response), 200
+@app.route('/blocks', methods=['POST'])
+def post_block():
+    new_block = node.recieve_new_block(request.form['block'])
+    return jsonify(new_block), 200
 
 
 if __name__ == '__main__':
@@ -176,10 +151,13 @@ if __name__ == '__main__':
 
         if publicFile is not None and privateFile is not None:
             public_key = ECC.import_key(open(f'{publicFile}', 'rt').read())
-            private_key = ECC.import_key(open(f'{publicFile}', 'rt').read())
+            private_key = ECC.import_key(open(f'{privateFile}', 'rt').read())
 
             if public_key.export_key(format='PEM') != private_key.public_key().export_key(format='PEM'):
                 raise Exception('Public/Private Key Mismatch')
+
+            if not private_key.has_private():
+                raise Exception('Private key cannot be used for signing')
 
         node = Node(addr, public_key, private_key)
 

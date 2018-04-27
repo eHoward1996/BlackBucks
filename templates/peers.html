@@ -1,0 +1,83 @@
+<html>
+<head>
+    <title> BlackBucks Reference Client</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static',filename='styles/index_style.css') }}">
+    <script type="text/javascript" src="{{ url_for('static', filename='scripts/register_script.js') }}"></script>
+</head>
+<body>
+    <div id="page" class="container">
+        <div id="header">
+            <div id="logo">
+                <img src="{{ url_for('static', filename='img/letter-b-logo.jpg') }}" alt="" width="200px" height="100px" />
+                <h1>
+                    <a href="#">BlackBucks</a>
+                </h1>
+                <h3>BlackCard</h3>
+                <br> The Official Web Based Wallet for BlackBucks
+            </div>
+            <div id="menu">
+                <ul>
+                    <li>
+                        <a href="{{ url_for('index') }}" accesskey="2" title="">Home</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('create_transaction') }}" accesskey="1" title="">Send</a>
+                    </li>
+                    <li>
+                        <a href="{{ url_for('chain') }}" accesskey="3" title="">BlockChain</a>
+                    </li>
+                    <li>
+                        <a href="#" accesskey="4" title="">Careers</a>
+                    </li>
+                    <li>
+                        <a href="#" accesskey="5" title="">Contact Us</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+        <div id="main">
+            <div id="welcome">
+                <div class="title">
+                    <span id="address">
+                        <strong>Add Peers to BlackBucks Network</strong>
+                    </span>
+                </div>
+            </div>
+            <div id="featured">
+                <div class="title">
+                    <h2>Peers: {{ peers | length }}</h2>
+                    <hr width="25%" />
+                </div>
+                <div id="responses">
+                    {{ message }}<br>
+                    {{ good_nodes }}<br>
+                    {{ bad_nodes }}<br>
+                </div>
+                <ul class="style2">
+                    <div>
+                        {% for peer in peers %}
+                            <li>
+                                {{ peer }}
+                            </li>
+                        {% endfor %}
+                        <hr/>
+                    </div>
+                </ul>
+                IP Address of the new Node:
+                <br>
+                <input type='text' value="" id="ip_addr" />&nbsp;
+                <input type="button" value="ADD" onclick="addIP()" />
+                <br>
+                <br> List of Nodes to be added:
+                <br>
+                <form action="/nodes/register" method="POST">
+                    <div id="added" name="nodes">
+                
+                    </div>
+                    <input id="sub" type="submit" style="visibility: hidden;" />
+                </form>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

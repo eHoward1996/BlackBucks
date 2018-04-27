@@ -1,9 +1,9 @@
 import datetime
 import os
+from multiprocessing import Process
 
 import requests
 import yaml
-from Crypto.Hash import SHA256
 from Crypto.PublicKey import ECC
 
 from src.blockchain import BlockChain
@@ -49,14 +49,14 @@ class Node(object):
         self.other_nodes.add(ip_address)
         self.blockchain = BlockChain()
 
-        # self.mining_process = Process(target=self.mine)
-        # self.mining_process.start()
+        self.mining_process = Process(target=self.mine)
+        self.mining_process.start()
 
-        # self.node_process = Process(
-        #     target=self.app.run,
-        #     args=(ip_address, self.FULL_NODE_PORT)
-        # )
-        # self.node_process.start()
+        self.node_process = Process(
+            target=self.app.run,
+            args=(ip_address, self.FULL_NODE_PORT)
+        )
+        self.node_process.start()
 
         self.wallet = Wallet(
             self.public_key,
@@ -66,6 +66,9 @@ class Node(object):
 
     def get_ip_address(self):
         return self.address
+
+    def get_nodes(self):
+        return self.other_nodes
 
     def request_nodes(self, node, port):
         url = self.network_config['nodes_url'].format(node, port)
@@ -78,18 +81,13 @@ class Node(object):
         return None
 
     def request_all_nodes(self):
-        nodes = self.other_nodes.copy()
         bad_nodes = set()
 
-        for node in nodes:
+        for node in self.other_nodes:
             if node != self.address:
                 node_addr = self.request_nodes(node, self.network_config['node_port'])
-                if node_addr is not None:
-                    nodes = nodes.add(node_addr)
-                else:
+                if node_addr is None:
                     bad_nodes.add(node)
-
-        self.other_nodes = nodes
 
         for node in bad_nodes:
             self.other_nodes.discard(node)
@@ -153,6 +151,9 @@ class Node(object):
     def recieve_new_transaction(self, transaction):
         self.blockchain.new_transaction(transaction)
 
+    def recieve_new_block(self, block):
+        self.blockchain.add_block(block)
+
     def get_balance(self):
         return self.blockchain.get_balance(self.wallet.get_public_address())
 
@@ -165,37 +166,27 @@ class Node(object):
         return tx
 
     def broadcast_block(self, block):
-        # TODO convert to grequests and concurrently gather a list of responses
-        statuses = {
-            "confirmations": 0,
-            "invalidations": 0,
-            "expirations": 0
-        }
-
-        self.request_nodes_from_all()
+        self.request_all_nodes()
         bad_nodes = set()
+
         data = {
             "block": block,
             "host": self.host
         }
 
-        for node in self.full_nodes:
+        for node in self.other_nodes:
+            if node == self.address:
+                continue
+
             url = "http://{}:{}/blocks".format(node, 5000)
             try:
-                response = requests.post(url, data)
-                if response.status_code == 202:
-                    # confirmed and accepted by node
-                    statuses["confirmations"] += 1
-                elif response.status_code == 406:
-                    # invalidated and rejected by node
-                    statuses["invalidations"] += 1
-                elif response.status_code == 409:
-                    # expired and rejected by node
-                    statuses["expirations"] += 1
+                requests.post(url, data)
             except requests.exceptions.RequestException as re:
                 bad_nodes.add(node)
+
         for node in bad_nodes:
             self.remove_node(node)
+
         bad_nodes.clear()
         return statuses
 
@@ -213,16 +204,37 @@ class Node(object):
             "transaction": tx.jsonify()
         }
 
-        print(data)
-
         for node in self.other_nodes:
-            url = self.network_config['add_tx_url'].format(node, self.network_config['node_port'])
-            try:
-                response = requests.post(url, json=data)
-            except requests.exceptions.RequestException as re:
-                bad_nodes.add(node)
+            if node != self.address:
+                url = self.network_config['add_tx_url'].format(node, self.network_config['node_port'])
+                try:
+                    requests.post(url, data=data)
+                except requests.exceptions.RequestException as re:
+                    bad_nodes.add(node)
+
         for node in bad_nodes:
             self.remove_node(node)
+
         bad_nodes.clear()
-        return
+        return "Transaction posted"
         # TODO: convert to grequests and return list of responses
+
+    def mine(self):
+        while True:
+            last_block = self.blockchain.last_block
+            nonce, hashProvided = self.blockchain.proof_of_work(last_block.block_header.nonce)
+
+            # Forge the new block by adding it to the chain
+            previous_hash = self.blockchain.hash(last_block)
+            block = self.blockchain.new_block(nonce, previous_hash, self.public_address)
+
+            response = {
+                'message': "New Block forged",
+                'index': block.index,
+                'transactions': block.transactions_toListOfDict(),
+                'previous_hash': block.block_header.previous_hash,
+                'timestamp': block.timestamp,
+                'merkle_root': block.block_header.merkle_root,
+                'nonce': block.block_header.nonce
+            }
+            self.broadcast_block(block)

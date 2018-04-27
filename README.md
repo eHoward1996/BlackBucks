@@ -27,19 +27,29 @@
 
     > `pipenv install`
 
+## Configuring the Project
+
+1. Navigate to the project folder, For example
+    > `\home\user\Project\BlackBucks`
+
+2. The user configuration file is located in the `\config\user.yaml` folder
+
+3. The public_key_file and private_key_file variables should be set to the absolute file path of your public and private key files. For example:
+    > `\home\user\Project\BlackBucks\YourPrivateKey.pem`
+
 ## Running the project
 
-> To run the project, navigate to the project folder. For example,
->
-> `\home\user\Project\BlackBucks`
->
-> and open a terminal window. In the terminal, run the following command
->
-> `python BlockChain.py -p <port_number>`
->
-> This will start the program on port number <port_number>
----
-> Open your browser of choice, and navigate to
-> your localhost address (localhost:5000).
-> From here you should be greeted to a login page and
-> should be able to enter credentials and use the wallet.
+1. To run the project, navigate to the project folder. For example,
+    > `\home\user\Project\BlackBucks`
+
+2. Open a terminal window.
+
+3. In the terminal, run the following command
+    > `python BlockChain.py <ip_address>`
+    > This will start the program on the given IP Address
+
+4. Open your browser of choice, and navigate to the address (<ip_address>:5000).
+
+> From here you should be greeted to a main page and
+> should be able to send and recieve BlackBucks as well
+> as add new nodes and view the full BlockChain.

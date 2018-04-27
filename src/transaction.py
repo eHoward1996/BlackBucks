@@ -1,6 +1,7 @@
 import json
 from time import time
 
+from Crypto.Cipher import AES
 from Crypto.Hash import SHA256
 from Crypto.PublicKey import ECC
 from Crypto.Signature import DSS
@@ -55,8 +56,7 @@ class Transaction():
             "source": self.origin,
             "destination": self.destination,
             "amount": self.amount,
-            "timestamp": self.timestamp,
-            "signature": self.signature
+            "timestamp": self.timestamp
         }
         data_json = json.dumps(data, sort_keys=True)
         hash_object = SHA256.new(str.encode(data_json))
@@ -64,9 +64,13 @@ class Transaction():
         return hash_object.hexdigest()
 
     def sign(self, private_key):
-        signer = DSS.new(private_key, 'fips-186-3')
-        signature = signer.sign(self.stringify())
+        signer = DSS.new(
+            private_key,
+            mode='fips-186-3'
+        )
+        h = SHA256.new(str.encode(self.stringify()))
 
+        signature = signer.sign(h)
         self._signature = signature
         self._transaction_hash = self._calculateTransactionHash()
         return signature
