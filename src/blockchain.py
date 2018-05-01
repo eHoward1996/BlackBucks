@@ -32,13 +32,13 @@ class BlockChain(object):
         genesis_transactions = []
         t1 = Transaction(
             "0",
-            "cf9cb6afa95f94dfd09142f3d14b06c9489240f2832f45d8794545d0085980f0",
+            "6d9c84400e035877ee464e070b5d8bf01880ca2fb060062a71b43cdb58497c39",
             25,
             "",
         )
         t2 = Transaction(
             "0",
-            "cf9cb6afa95f94dfd09142f3d14b06c9489240f2832f45d8794545d0085980f0",
+            "6d9c84400e035877ee464e070b5d8bf01880ca2fb060062a71b43cdb58497c39",
             25,
             "",
         )
@@ -159,7 +159,10 @@ class BlockChain(object):
     @property
     def last_block(self):
         # Returns the last block in the chain
-        return self.blocks[-1]
+        try:
+            return self.blocks[-1]
+        except IndexError:
+            return None
 
     def proof_of_work(self, last_proof):
         """
